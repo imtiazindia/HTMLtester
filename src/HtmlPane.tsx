@@ -17,7 +17,9 @@ export default function HtmlPane({ html, job, engine }: { html: string; job?: Jo
     if (!html) return '';
     const clean = DOMPurify.sanitize(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'], FORBID_TAGS: ['script','iframe','object','embed','form','base','meta','link'], FORBID_ATTR: ['srcset'] });
     const policy = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; font-src data:;">`;
-    const originalWidth = Number(html.match(/\.w[0-9a-f]+\s*\{\s*width:\s*([\d.]+)px/i)?.[1]) || 800;
+    const page = new DOMParser().parseFromString(clean, 'text/html').querySelector('.pf');
+    const widthClass = Array.from(page?.classList || []).find(name => /^w[0-9a-f]+$/i.test(name));
+    const originalWidth = widthClass ? Number(html.match(new RegExp('\\.'+widthClass+'\\s*\\{\\s*width:\\s*([\\d.]+)px','i'))?.[1]) || 800 : 800;
     const scale = zoom === 'fit' ? engine === 'pdf2htmlEX' ? Math.max(.1,(width-32)/originalWidth) : 1 : Number(zoom);
     const fix = engine === 'pdf2htmlEX' ? '<style>#sidebar{display:none!important}#page-container{position:static!important;overflow:visible!important;background:#fff!important}.pf,.pc{display:block!important}.pf{margin:12px auto!important}</style>' : '<style>body{margin:24px;color:#182036;font-family:Georgia,serif;line-height:1.55}img{max-width:100%;height:auto}table{border-collapse:collapse;max-width:100%}td,th{border:1px solid #ccd0da;padding:6px}pre{white-space:pre-wrap}</style>';
     return clean.replace(/<head[^>]*>/i, '<head>'+policy+fix+`<style>body{zoom:${scale}}</style>`);
