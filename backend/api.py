@@ -7,6 +7,7 @@ import uuid
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
+from telemetry import event_line, log_record, read_archive, save_log
 
 ENGINES = ['pdf2htmlEX', 'docling', 'opendataloader']
 UUID = re.compile(r'^[a-f0-9]{32}$')
@@ -26,6 +27,23 @@ def handler(event, context):
         bucket = os.environ['DATA_BUCKET']
         body = json.loads(event.get('body') or '{}')
         route = event['routeKey']
+        if route == 'GET /logs':
+            records, _ = read_archive(s3, os.environ['LOG_BUCKET'], owner)
+            return response(200, {'logs':[{k:v for k,v in item.items() if k!='text'} for item in records]})
+        if route in ('GET /logs/{id}', 'POST /jobs/{id}/log'):
+            ident = event.get('pathParameters',{}).get('id','')
+            if not UUID.fullmatch(ident): return response(400, {'error':'Invalid log.'})
+            if route == 'GET /logs/{id}':
+                records, _ = read_archive(s3, os.environ['LOG_BUCKET'], owner)
+                record = next((item for item in records if item['id']==ident), None)
+                return response(200, record) if record else response(404, {'error':'This log was not saved or has been removed by retention.'})
+            key = f'{owner}/jobs/{ident}/status.json'
+            state = json.loads(s3.get_object(Bucket=bucket,Key=key)['Body'].read())
+            saved = save_log(s3, os.environ['LOG_BUCKET'], owner, log_record(ident,state), create=True)
+            # Close the race where a worker finished between the read and save.
+            latest = json.loads(s3.get_object(Bucket=bucket,Key=key)['Body'].read())
+            save_log(s3, os.environ['LOG_BUCKET'], owner, log_record(ident,latest))
+            return response(200, {'saved':saved})
         if route == 'POST /uploads':
             size = body.get('size', 0)
             if not isinstance(size, int) or not 0 < size <= 20*1024*1024:
@@ -47,10 +65,11 @@ def handler(event, context):
             ident = uuid.uuid4().hex
             prefix = f'{owner}/jobs/{ident}'
             created = int(time.time())
-            state = {'status':'queued','engine':engine,'created':created}
+            state = {'status':'queued','engine':engine,'created':created,'revision':0,
+                     'events':[event_line('Upload received. Conversion queued.') ]}
             s3.put_object(Bucket=bucket, Key=prefix+'/status.json', Body=json.dumps(state), ContentType='application/json')
             boto3.client('sqs').send_message(QueueUrl=os.environ['QUEUE_URL'],
-                MessageBody=json.dumps({'prefix':prefix,'sourceKey':source_key,'engine':engine,'created':created}))
+                MessageBody=json.dumps({'prefix':prefix,'sourceKey':source_key,'engine':engine,'created':created,'events':state['events']}))
             return response(202, {'id':ident, **state})
         if route == 'GET /jobs/{id}':
             ident = event['pathParameters'].get('id','')
@@ -60,6 +79,10 @@ def handler(event, context):
             state = json.loads(s3.get_object(Bucket=bucket, Key=prefix+'/status.json')['Body'].read())
             if state['status'] in ('queued','running') and time.time()-state['created'] > 960:
                 state.update(status='failed', error='The job timed out. Please try fewer pages.')
+                state.setdefault('events', []).append(event_line(state['error']))
+                state['revision'] = state.get('revision',0)+1
+                s3.put_object(Bucket=bucket,Key=prefix+'/status.json',Body=json.dumps(state),ContentType='application/json')
+                save_log(s3,os.environ['LOG_BUCKET'],owner,log_record(ident,state))
             if state['status'] == 'complete':
                 state['url'] = s3.generate_presigned_url('get_object', Params={'Bucket':bucket,'Key':prefix+'/result.html'}, ExpiresIn=900)
             return response(200, state)

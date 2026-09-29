@@ -18,4 +18,4 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install boto3 pypdf pytest
-      - run: pytest backend/test_backend.py -q
+      - run: pytest backend -q

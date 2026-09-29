@@ -1,6 +1,7 @@
 export type Config = { apiUrl: string; clientId: string; region: string };
 export type Session = { token: string; expires: number };
-export type Job = { id: string; status: 'queued'|'running'|'complete'|'failed'; engine: string; error?: string; seconds?: number; pages?: number; bytes?: number; url?: string };
+export type TelemetryEvent = { time: string; message: string };
+export type Job = { id: string; status: 'queued'|'running'|'complete'|'failed'; engine: string; error?: string; logError?: string; seconds?: number; pages?: number; bytes?: number; url?: string; events?: TelemetryEvent[]; droppedEvents?: number };
 export async function signIn(config: Config, username: string, password: string): Promise<Session> {
   const response = await fetch(`https://cognito-idp.${config.region}.amazonaws.com/`, {
     method: 'POST', headers: { 'Content-Type': 'application/x-amz-json-1.1', 'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth' },

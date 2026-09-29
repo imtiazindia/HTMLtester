@@ -41,6 +41,16 @@ The two CloudFormation stacks are `HTMLtesterBuild` and `HTMLtesterApp`. Amplify
 - Tokens are held in memory and expire after one hour. Reloading or signing out clears the browser session. Files/results are not persisted across browser reloads.
 - The PDF viewer renders one page at a time, with page and zoom controls. Semantic HTML may reflow and has independent scrolling; synchronized scrolling would imply a page correspondence that these engines do not guarantee.
 
+## Telemetry
+
+Select **Telemetry** after signing in to open the execution console. It displays upload/queue stages, timestamped worker events, converter stdout/stderr, and a heartbeat for quiet processes. Server progress is published about every two seconds and the browser polls every 2.5 seconds; this is near-live rather than an instantaneous terminal.
+
+Select **Log** during or after a conversion to retain its server log, including events emitted before the click. The worker continues updating that saved log through completion even when the modal or browser closes. Use the saved-log list to view a log and **Download log** to export its UTF-8 `.log` file. Close or Escape dismisses the modal without stopping conversion.
+
+Only the latest three saved operations per account are retained, ordered by operation creation time. Saving an older operation cannot evict three newer ones. Logs are stored in a separate private, unversioned S3 archive, using conditional writes to enforce retention under concurrent workers/tabs. Evicted logs are removed from the archive and cannot be recreated by late worker updates. Saved logs survive the one-day PDF/output expiry; browser downloads are independent local copies. Unsaved live telemetry expires with temporary job data.
+
+Logs retain the latest 500 events, with each line capped at 1,000 characters; omitted earlier events are explicitly marked. Credentials and authentication tokens are not deliberately logged. Native converter diagnostics may contain document details, so logs remain restricted to their owner's account.
+
 ## Costs
 
 No always-on VM or GPU. Lambda compute is billed per use; ECR image storage, S3, Amplify, CodeBuild and API requests may still incur charges. At the standard x86 Lambda rate of $0.0000166667/GB-second, a 3,008 MB worker running for 60 seconds costs approximately $0.00294 before free-tier allowances, other services, and regional pricing differences. A 12-minute conversion is approximately $0.0353 of worker compute. This is an estimate, not a hard budget cap. The account's existing budget alerts are unchanged.
