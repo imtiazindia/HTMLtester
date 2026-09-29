@@ -1,0 +1,5 @@
+docling==2.131.0
+opendataloader-pdf==2.5.11
+awslambdaric==4.1.0
+pypdf==6.19.0
+boto3==1.43.104
