@@ -1,6 +1,7 @@
 from pathlib import Path
 import subprocess
 import sys
+from converters import MAX_PAGES
 
 def run(engine, source, output):
     if engine == 'pdf2htmlEX':
@@ -19,7 +20,7 @@ def run(engine, source, output):
         options.generate_picture_images = True
         options.accelerator_options = AcceleratorOptions(num_threads=2, device=AcceleratorDevice.CPU)
         converter = DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=options)})
-        result = converter.convert(source, max_num_pages=40, max_file_size=20*1024*1024)
+        result = converter.convert(source, max_num_pages=MAX_PAGES, max_file_size=20*1024*1024)
         result.document.save_as_html(output, image_mode=ImageRefMode.EMBEDDED)
     elif engine == 'opendataloader':
         import opendataloader_pdf

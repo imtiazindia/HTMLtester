@@ -34,7 +34,7 @@ The two CloudFormation stacks are `HTMLtesterBuild` and `HTMLtesterApp`. Amplify
 
 ## Limits and behavior
 
-- Digitally generated PDFs: 20 MB, 40 pages. Encrypted PDFs are rejected. Docling OCR is disabled. OpenDataLoader uses deterministic local mode, not hybrid AI.
+- Digitally generated PDFs: 20 MB, 500 pages. Encrypted PDFs are rejected. Docling OCR is disabled. OpenDataLoader uses deterministic local mode, not hybrid AI.
 - Maximum converter subprocess time: 12 minutes. Workers time out at 14 minutes. The UI reports a stalled job after 16 minutes; automatic Lambda retries are disabled.
 - Uploaded files and outputs are private, scoped to the signed-in Cognito subject. Presigned links expire after 15 minutes. S3 lifecycle marks objects for expiry after one day; deletion is asynchronous.
 - Preview sanitizes HTML, blocks external resources and runs in an iframe with no script or same-origin permission. pdf2htmlEX visibility CSS is adapted for script-free display. Download preserves original converter output, including its scripts. The preview can therefore differ from an independently opened download.

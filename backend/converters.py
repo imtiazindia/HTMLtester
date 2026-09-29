@@ -8,7 +8,7 @@ import threading
 from pypdf import PdfReader
 
 ENGINES = {'pdf2htmlEX', 'docling', 'opendataloader'}
-MAX_PAGES = 40
+MAX_PAGES = 500
 
 def validate_pdf(source: Path):
     if source.stat().st_size > 20 * 1024 * 1024:

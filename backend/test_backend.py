@@ -22,8 +22,8 @@ def test_rejects_fake_pdf(tmp_path):
 
 def test_rejects_encrypted_and_too_many_pages(tmp_path):
     with pytest.raises(ValueError, match='Password-protected'): validate_pdf(pdf(tmp_path/'locked.pdf',password='private'))
-    with pytest.raises(ValueError, match='1–40'): validate_pdf(pdf(tmp_path/'large.pdf',pages=41))
-    assert validate_pdf(pdf(tmp_path/'valid.pdf',pages=2)) == 2
+    with pytest.raises(ValueError, match='1–500'): validate_pdf(pdf(tmp_path/'large.pdf',pages=501))
+    assert validate_pdf(pdf(tmp_path/'valid.pdf',pages=500)) == 500
 
 def event(route, body=None, owner='owner-one', ident='a'*32):
     return {'requestContext':{'authorizer':{'jwt':{'claims':{'sub':owner} if owner else {}}}},'routeKey':route,'body':json.dumps(body or {}),'pathParameters':{'id':ident}}
