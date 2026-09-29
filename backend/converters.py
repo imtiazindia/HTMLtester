@@ -6,16 +6,26 @@ import time
 import queue
 import threading
 from pypdf import PdfReader
+from pypdf.generic import NullObject
 
 ENGINES = {'pdf2htmlEX', 'docling', 'opendataloader'}
 MAX_PAGES = 500
+
+class ValidationPdfReader(PdfReader):
+    @property
+    def is_encrypted(self):
+        # PDF null dictionary values are equivalent to absent entries. pypdf
+        # 6.19 checks only for the key and crashes on a legal /Encrypt null.
+        entry = self.trailer.get('/Encrypt')
+        return entry is not None and not isinstance(entry.get_object(), NullObject)
+
 
 def validate_pdf(source: Path):
     if source.stat().st_size > 20 * 1024 * 1024:
         raise ValueError('PDF must be 20 MB or smaller.')
     if not source.read_bytes()[:1024].lstrip().startswith(b'%PDF-'):
         raise ValueError('The uploaded file is not a PDF.')
-    reader = PdfReader(source)
+    reader = ValidationPdfReader(source)
     if reader.is_encrypted:
         raise ValueError('Password-protected PDFs are not supported. Upload an unlocked copy.')
     pages = len(reader.pages)

@@ -20,6 +20,15 @@ def test_rejects_fake_pdf(tmp_path):
     path=tmp_path/'fake.pdf'; path.write_text('<html>Not a PDF</html>')
     with pytest.raises(ValueError, match='not a PDF'): validate_pdf(path)
 
+def test_accepts_null_encryption_entry(tmp_path):
+    path = pdf(tmp_path/'null-encryption.pdf')
+    data = path.read_bytes()
+    # Only the trailer changes, so all cross-reference offsets remain valid.
+    before, trailer = data.rsplit(b'trailer', 1)
+    path.write_bytes(before + b'trailer' + trailer.replace(b'/Root', b'/Encrypt null\n/Root', 1))
+    assert validate_pdf(path) == 1
+
+
 def test_rejects_encrypted_and_too_many_pages(tmp_path):
     with pytest.raises(ValueError, match='Password-protected'): validate_pdf(pdf(tmp_path/'locked.pdf',password='private'))
     with pytest.raises(ValueError, match='1–500'): validate_pdf(pdf(tmp_path/'large.pdf',pages=501))

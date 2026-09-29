@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import tempfile
 import time
+import traceback
 import boto3
 from converters import convert
 from telemetry import event_line, log_record, save_log, MAX_EVENTS
@@ -48,8 +49,8 @@ def handler(event, context):
             state.update(metrics, status='complete', completed=int(time.time()))
             emit('Conversion complete. HTML is ready to view and download.')
     except Exception as error:
-        print(type(error).__name__, str(error)[:1000])
-        message = str(error) if isinstance(error, (ValueError, RuntimeError)) else 'Conversion failed or exceeded its time limit. Try a smaller document or another engine.'
+        traceback.print_exc()
+        message = str(error) if isinstance(error, (ValueError, RuntimeError, TimeoutError)) else f'PDF processing failed ({type(error).__name__}). The server log contains diagnostic details.'
         state.update(status='failed', error=message)
         emit('Conversion failed: '+message)
     save()
