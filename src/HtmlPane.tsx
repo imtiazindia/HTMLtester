@@ -15,7 +15,11 @@ export default function HtmlPane({ html, job, engine }: { html: string; job?: Jo
   }, []);
   const preview = useMemo(() => {
     if (!html) return '';
-    const clean = DOMPurify.sanitize(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'], FORBID_TAGS: ['script','iframe','object','embed','form','base','meta','link'], FORBID_ATTR: ['srcset'] });
+    const document = new DOMParser().parseFromString(html, 'text/html');
+    // Upstream CSS comments contain angle-bracket email addresses. Remove comments
+    // before sanitizing so DOMPurify can retain the actual layout rules.
+    document.querySelectorAll('style').forEach(style => { style.textContent = (style.textContent || '').replace(/\/\*[\s\S]*?\*\//g, ''); });
+    const clean = DOMPurify.sanitize(document.documentElement.outerHTML, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'], FORBID_TAGS: ['script','iframe','object','embed','form','base','meta','link'], FORBID_ATTR: ['srcset'] });
     const policy = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; font-src data:;">`;
     const page = new DOMParser().parseFromString(clean, 'text/html').querySelector('.pf');
     const widthClass = Array.from(page?.classList || []).find(name => /^w[0-9a-f]+$/i.test(name));
