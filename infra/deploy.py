@@ -81,7 +81,7 @@ def deploy():
     resources={
       'Data':{'Type':'AWS::S3::Bucket','Properties':{'PublicAccessBlockConfiguration':{'BlockPublicAcls':True,'BlockPublicPolicy':True,'IgnorePublicAcls':True,'RestrictPublicBuckets':True},'CorsConfiguration':{'CorsRules':[{'AllowedOrigins':[origin,'http://localhost:5173'],'AllowedMethods':['GET','POST'],'AllowedHeaders':['*'],'MaxAge':300}]},'LifecycleConfiguration':{'Rules':[{'Id':'temporary-files','Status':'Enabled','ExpirationInDays':1}]}}},
       'Logs':{'Type':'AWS::S3::Bucket','Properties':{'PublicAccessBlockConfiguration':{'BlockPublicAcls':True,'BlockPublicPolicy':True,'IgnorePublicAcls':True,'RestrictPublicBuckets':True}}},
-      'Pool':{'Type':'AWS::Cognito::UserPool','Properties':{'UserPoolName':'HTMLtester','AdminCreateUserConfig':{'AllowAdminCreateUserOnly':True},'Policies':{'PasswordPolicy':{'MinimumLength':12,'RequireLowercase':True,'RequireUppercase':True,'RequireNumbers':True,'RequireSymbols':True}},'UsernameConfiguration':{'CaseSensitive':False}}},
+      'Pool':{'Type':'AWS::Cognito::UserPool','Properties':{'UserPoolName':'HTMLtester','AdminCreateUserConfig':{'AllowAdminCreateUserOnly':True},'Policies':{'PasswordPolicy':{'MinimumLength':7,'RequireLowercase':True,'RequireUppercase':True,'RequireNumbers':True,'RequireSymbols':False}},'UsernameConfiguration':{'CaseSensitive':False}}},
       'Client':{'Type':'AWS::Cognito::UserPoolClient','Properties':{'UserPoolId':ref('Pool'),'ClientName':'htmltester-web','GenerateSecret':False,'ExplicitAuthFlows':['ALLOW_USER_PASSWORD_AUTH','ALLOW_REFRESH_TOKEN_AUTH'],'PreventUserExistenceErrors':'ENABLED','AccessTokenValidity':1,'IdTokenValidity':1,'TokenValidityUnits':{'AccessToken':'hours','IdToken':'hours'}}},
       'DeadQueue':{'Type':'AWS::SQS::Queue','Properties':{'MessageRetentionPeriod':86400,'SqsManagedSseEnabled':True}},
       'Queue':{'Type':'AWS::SQS::Queue','Properties':{'VisibilityTimeout':5100,'MessageRetentionPeriod':86400,'SqsManagedSseEnabled':True,'RedrivePolicy':{'deadLetterTargetArn':att('DeadQueue','Arn'),'maxReceiveCount':1}}},
@@ -101,13 +101,13 @@ def deploy():
         resources[name]={'Type':'AWS::Logs::LogGroup','Properties':{'LogGroupName':'/aws/lambda/'+function,'RetentionInDays':7}}
     state.update(stack('HTMLtesterApp',resources,{'apiUrl':{'Value':att('Api','ApiEndpoint')},'userPoolId':{'Value':ref('Pool')},'clientId':{'Value':ref('Client')},'dataBucket':{'Value':ref('Data')},'logBucket':{'Value':ref('Logs')}}));save()
     cognito=session.client('cognito-idp')
-    try: cognito.admin_get_user(UserPoolId=state['userPoolId'],Username='imtiaz')
+    try: cognito.admin_get_user(UserPoolId=state['userPoolId'],Username='upSkillAir')
     except cognito.exceptions.UserNotFoundException:
         password=secrets.token_urlsafe(22)+'aA1!'
-        cognito.admin_create_user(UserPoolId=state['userPoolId'],Username='imtiaz',MessageAction='SUPPRESS')
-        cognito.admin_set_user_password(UserPoolId=state['userPoolId'],Username='imtiaz',Password=password,Permanent=True)
+        cognito.admin_create_user(UserPoolId=state['userPoolId'],Username='upSkillAir',MessageAction='SUPPRESS')
+        cognito.admin_set_user_password(UserPoolId=state['userPoolId'],Username='upSkillAir',Password=password,Permanent=True)
         credentials=pathlib.Path.home()/'.codex'/'htmltester-login.json'
-        credentials.write_text(json.dumps({'url':origin,'username':'imtiaz','password':password},indent=2))
+        credentials.write_text(json.dumps({'url':origin,'username':'upSkillAir','password':password},indent=2))
         print('Login saved locally:',credentials)
     (ROOT/'public/config.json').write_text(json.dumps({k:state[k] for k in ('apiUrl','clientId')} | {'region':region}))
     print('Application infrastructure ready:',origin)

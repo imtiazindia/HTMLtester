@@ -22,7 +22,7 @@ export default function App() {
   const [clientEvents,setClientEvents] = useState<TelemetryEvent[]>([]);
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
-  const [username,setUsername] = useState('imtiaz');
+  const [username,setUsername] = useState('upSkillAir');
   const [password,setPassword] = useState('');
   const [authBusy,setAuthBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
