@@ -111,12 +111,29 @@ def deploy():
     print('Application infrastructure ready:',origin)
 
 def web():
+    config = json.loads((ROOT/'public/config.json').read_text())
+    if not config.get('apiUrl') or not config.get('clientId'):
+        raise RuntimeError('Run the deploy phase successfully before publishing the frontend.')
     subprocess.run(['npm.cmd' if os.name=='nt' else 'npm','run','build'],cwd=ROOT,check=True)
     buffer=io.BytesIO()
     with zipfile.ZipFile(buffer,'w',zipfile.ZIP_DEFLATED) as z:
         for f in (ROOT/'dist').rglob('*'):
             if f.is_file(): z.write(f,f.relative_to(ROOT/'dist').as_posix())
     amplify=session.client('amplify')
+    amplify.update_app(appId=state['amplifyId'],customHeaders='''customHeaders:
+  - pattern: '**'
+    headers:
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: Referrer-Policy
+        value: no-referrer
+      - key: X-Frame-Options
+        value: DENY
+  - pattern: '/config.json'
+    headers:
+      - key: Cache-Control
+        value: no-store
+''')
     job=amplify.create_deployment(appId=state['amplifyId'],branchName='main')
     import urllib.request
     urllib.request.urlopen(urllib.request.Request(job['zipUploadUrl'],data=buffer.getvalue(),method='PUT')).read()

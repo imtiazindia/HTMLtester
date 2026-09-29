@@ -20,7 +20,9 @@ def handler(event, context):
         owner = claims.get('sub')
         if not owner:
             return response(401, {'error':'Sign in to continue.'})
-        s3 = boto3.client('s3', config=Config(signature_version='s3v4'))
+        region = os.environ.get('AWS_REGION', 'ap-south-1')
+        s3 = boto3.client('s3', region_name=region, endpoint_url=f'https://s3.{region}.amazonaws.com',
+                          config=Config(signature_version='s3v4', s3={'addressing_style':'virtual'}))
         bucket = os.environ['DATA_BUCKET']
         body = json.loads(event.get('body') or '{}')
         route = event['routeKey']
