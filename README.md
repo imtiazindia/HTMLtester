@@ -16,7 +16,7 @@ npm run build
 
 ## Backend and AWS
 
-AWS Mumbai (`ap-south-1`): Amplify static hosting, HTTP API with Cognito JWT authorization, private S3 uploads/results, a small Python API Lambda, and an on-demand 4 GB conversion Lambda container. An SQS queue limits conversion concurrency to two. CodeBuild builds the Linux image and ECR stores it; no local Docker installation is required. Resources are isolated from other applications.
+AWS Mumbai (`ap-south-1`): Amplify static hosting, HTTP API with Cognito JWT authorization, private S3 uploads/results, a small Python API Lambda, and an on-demand 3,008 MB conversion Lambda container (the account's current memory limit). An SQS queue limits conversion concurrency to two. CodeBuild builds the Linux image and ECR stores it; no local Docker installation is required. Resources are isolated from other applications.
 
 ```sh
 python -m venv .venv
@@ -43,7 +43,7 @@ The two CloudFormation stacks are `HTMLtesterBuild` and `HTMLtesterApp`. Amplify
 
 ## Costs
 
-No always-on VM or GPU. Lambda compute is billed per use; ECR image storage, S3, Amplify, CodeBuild and API requests may still incur charges. At the standard x86 Lambda rate of $0.0000166667/GB-second, a 4 GB worker running for 60 seconds costs approximately $0.004 before free-tier allowances, other services, and regional pricing differences. A 12-minute conversion is approximately $0.048 of worker compute. This is an estimate, not a hard budget cap. The account's existing budget alerts are unchanged.
+No always-on VM or GPU. Lambda compute is billed per use; ECR image storage, S3, Amplify, CodeBuild and API requests may still incur charges. At the standard x86 Lambda rate of $0.0000166667/GB-second, a 3,008 MB worker running for 60 seconds costs approximately $0.00294 before free-tier allowances, other services, and regional pricing differences. A 12-minute conversion is approximately $0.0353 of worker compute. This is an estimate, not a hard budget cap. The account's existing budget alerts are unchanged.
 
 ## Research and licenses
 
