@@ -11,5 +11,6 @@ RUN python -c "from pathlib import Path; from docling.utils.model_downloader imp
 ENV HOME=/tmp HF_HOME=/tmp/huggingface XDG_CACHE_HOME=/tmp/cache OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 TOKENIZERS_PARALLELISM=false
 COPY backend/ /app/
 RUN python -c "import opendataloader_pdf; import docling; import pypdf"
+RUN python -c "from pypdf import PdfWriter; w=PdfWriter(); w.add_blank_page(width=612,height=792); w.write('/tmp/smoke.pdf')" && su -s /bin/sh nobody -c 'python /app/run_engine.py pdf2htmlEX /tmp/smoke.pdf /tmp/smoke.html' && test -s /tmp/smoke.html && rm /tmp/smoke.pdf /tmp/smoke.html
 ENTRYPOINT ["python", "-m", "awslambdaric"]
 CMD ["worker.handler"]

@@ -4,7 +4,9 @@ import sys
 
 def run(engine, source, output):
     if engine == 'pdf2htmlEX':
-        subprocess.run(['pdf2htmlEX', '--embed', 'cfijo', '--dest-dir', str(output.parent),
+        # Extracted AppImages do not have the original install-time share path.
+        manifest = next(Path('/opt/pdf2html/squashfs-root').rglob('manifest'))
+        subprocess.run(['pdf2htmlEX', '--data-dir', str(manifest.parent), '--embed', 'cfijo', '--dest-dir', str(output.parent),
                         '--process-outline', '0', '--printing', '0', str(source), output.name], check=True)
     elif engine == 'docling':
         from docling.document_converter import DocumentConverter, PdfFormatOption
